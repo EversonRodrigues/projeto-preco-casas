@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+*.egg-info/
+.streamlit/secrets.toml
+
+# Diretórios de tooling local (não fazem parte do produto)
+.claude/
+.llm/
+Skill/
+
+# dados ficam versionados (são pequenos, parte do "produto")
+# models/*.pkl ficam versionados (são produto reproduzível)
