@@ -1,0 +1,81 @@
+{
+  "algorithm": "xgb",
+  "hyperparams": {
+    "objective": "reg:squarederror",
+    "base_score": null,
+    "booster": null,
+    "callbacks": null,
+    "colsample_bylevel": null,
+    "colsample_bynode": null,
+    "colsample_bytree": 0.7,
+    "device": null,
+    "early_stopping_rounds": null,
+    "enable_categorical": false,
+    "eval_metric": null,
+    "feature_types": null,
+    "gamma": null,
+    "grow_policy": null,
+    "importance_type": null,
+    "interaction_constraints": null,
+    "learning_rate": 0.05,
+    "max_bin": null,
+    "max_cat_threshold": null,
+    "max_cat_to_onehot": null,
+    "max_delta_step": null,
+    "max_depth": 4,
+    "max_leaves": null,
+    "min_child_weight": null,
+    "missing": null,
+    "monotone_constraints": null,
+    "multi_strategy": null,
+    "n_estimators": 300,
+    "n_jobs": 1,
+    "num_parallel_tree": null,
+    "random_state": 42,
+    "reg_alpha": null,
+    "reg_lambda": null,
+    "sampling_method": null,
+    "scale_pos_weight": null,
+    "subsample": null,
+    "tree_method": "hist",
+    "validate_parameters": null,
+    "verbosity": 0
+  },
+  "metrics": {
+    "rmsle": 0.1391028357128776,
+    "mae_usd": 17194.912764875866,
+    "r2": 0.8834364237427712
+  },
+  "comparison": {
+    "rf": {
+      "rmsle": 0.14523921392037178,
+      "mae_usd": 17306.93312942964,
+      "r2": 0.8830583274361004,
+      "cv_rmsle": 0.1403430271707682,
+      "best_params": {
+        "max_depth": 20,
+        "max_features": 0.5,
+        "n_estimators": 500
+      }
+    },
+    "xgb": {
+      "rmsle": 0.1391028357128776,
+      "mae_usd": 17194.912764875866,
+      "r2": 0.8834364237427712,
+      "cv_rmsle": 0.13138316568390807,
+      "best_params": {
+        "colsample_bytree": 0.7,
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "n_estimators": 300
+      }
+    }
+  },
+  "train_date": "2026-04-28T01:09:03.385196+00:00",
+  "lib_versions": {
+    "sklearn": "1.5.2",
+    "xgboost": "2.1.4",
+    "numpy": "1.26.4",
+    "pandas": "2.2.3"
+  }
+}
