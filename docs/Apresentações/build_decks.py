@@ -1,7 +1,7 @@
 """Gera dois .pptx: deck executivo (não-técnico) e deck técnico.
 
-Uso: python docs/presentations/build_decks.py
-Output: docs/presentations/{deck_executivo,deck_tecnico}.pptx
+Uso: python "docs/Apresentações/build_decks.py"
+Output: docs/Apresentações/{deck_executivo,deck_tecnico}.pptx
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from pptx.enum.text import PP_ALIGN
 from pptx.util import Inches, Pt
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT_DIR = ROOT / "docs" / "presentations"
+OUT_DIR = ROOT / "docs" / "Apresentações"
 METRICS = json.loads((ROOT / "docs" / "metrics.json").read_text(encoding="utf-8"))
 
 SLIDE_W = Inches(13.333)
