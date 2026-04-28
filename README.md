@@ -1,6 +1,6 @@
 # Preço de Casas — Pipeline ML com Demo
 
-> **Demo público:** _link a ser adicionado após deploy no Streamlit Cloud (M6.3)_
+> **Demo público:** https://projeto-preco-casas-rai4onxlzxzwjxvntdxmdv.streamlit.app/
 
 Pipeline completo de Machine Learning para estimar preços de imóveis no dataset
 **Ames Housing** (Kaggle "House Prices: Advanced Regression Techniques").
@@ -78,7 +78,7 @@ pytest tests/ -v
 | CA-07 | Streamlit carrega 3 páginas sem erro | ✅ validado via `streamlit.testing.AppTest` |
 | CA-08 | Página Predição estima preço em < 2s end-to-end | ✅ AppTest sub-segundo |
 | CA-09 | Página Insights exibe 6 gráficos | ✅ `app/pages/2_Insights.py` |
-| CA-10 | Deploy público com link no README | ⏳ pendente |
+| CA-10 | Deploy público com link no README | ✅ [Streamlit Cloud](https://projeto-preco-casas-rai4onxlzxzwjxvntdxmdv.streamlit.app/) |
 
 ## Estrutura
 
