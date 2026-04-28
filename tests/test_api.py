@@ -40,6 +40,6 @@ def test_predict_with_defaults_returns_positive_price(client):
 
 def test_predict_missing_field_returns_422(client):
     payload = get_feature_defaults()
-    incomplete = {k: v for k, v in list(payload.items())[:-1]}
+    incomplete = {k: v for k, v in payload.items() if k != "OverallQual"}
     r = client.post("/predict", json=incomplete)
     assert r.status_code == 422

@@ -27,4 +27,11 @@ def prepare_features(
 
 
 def get_feature_defaults() -> dict[str, float]:
+    """Mediana de cada feature no treino completo.
+
+    Uso pretendido: preencher campos não-visíveis do formulário Streamlit
+    (UI convenience). NÃO use estes valores como imputador no pipeline de
+    treino — o cálculo inclui o holdout e contaminaria a métrica final.
+    Ver D-06 em docs/decisions.md.
+    """
     return dict(_FEATURE_DEFAULTS)

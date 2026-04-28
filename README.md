@@ -57,13 +57,19 @@ streamlit run app/streamlit_app.py
 Com a API rodando, o Streamlit chama `POST /predict`. Sem a API, ele cai
 automaticamente para `src.predict.predict` direto (ver decisão R-04 no PRD).
 
+A URL da API pode ser sobrescrita via env var:
+
+```bash
+PRICEAPI_URL=https://meu-servidor.exemplo.com streamlit run app/streamlit_app.py
+```
+
 ## Testes
 
 ```bash
 pytest tests/ -v
 ```
 
-12 testes cobrindo preprocessing, predict e API.
+16 testes cobrindo preprocessing, predict, train e API.
 
 ## Critérios de aceitação (PRD Seção 6)
 

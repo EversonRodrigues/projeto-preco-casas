@@ -19,6 +19,6 @@ def test_predict_with_defaults_in_reasonable_range():
 
 def test_predict_missing_key_raises():
     defaults = get_feature_defaults()
-    incomplete = {k: v for k, v in list(defaults.items())[:-1]}
+    incomplete = {k: v for k, v in defaults.items() if k != "OverallQual"}
     with pytest.raises(ValueError, match="features faltantes"):
         predict(incomplete)

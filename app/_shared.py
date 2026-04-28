@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Callable
@@ -13,7 +14,7 @@ import streamlit as st
 
 from src.predict import predict as _predict_local
 
-API_URL = "http://localhost:8000"
+API_URL = os.environ.get("PRICEAPI_URL", "http://localhost:8000")
 
 
 def get_predictor() -> Callable[[dict], float]:
