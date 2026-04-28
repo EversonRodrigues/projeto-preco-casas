@@ -163,6 +163,19 @@ def main() -> None:
     save_model(winner_model, metadata)
     print(f">> Vencedor: {winner_name}. Salvo em models/best_model.pkl")
 
+    metrics_doc = {
+        "winner": winner_name,
+        "metrics": winner_metrics,
+        "comparison": metadata["comparison"],
+    }
+    docs_dir = ROOT / "docs"
+    docs_dir.mkdir(exist_ok=True)
+    (docs_dir / "metrics.json").write_text(
+        json.dumps(_scrub_nan(metrics_doc), indent=2, default=str, allow_nan=False),
+        encoding="utf-8",
+    )
+    print(">> docs/metrics.json atualizado")
+
 
 if __name__ == "__main__":
     main()

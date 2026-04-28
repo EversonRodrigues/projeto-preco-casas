@@ -1,0 +1,33 @@
+{
+  "winner": "xgb",
+  "metrics": {
+    "rmsle": 0.1391028357128776,
+    "mae_usd": 17194.912764875866,
+    "r2": 0.8834364237427712
+  },
+  "comparison": {
+    "rf": {
+      "rmsle": 0.14523921392037178,
+      "mae_usd": 17306.93312942964,
+      "r2": 0.8830583274361004,
+      "cv_rmsle": 0.1403430271707682,
+      "best_params": {
+        "max_depth": 20,
+        "max_features": 0.5,
+        "n_estimators": 500
+      }
+    },
+    "xgb": {
+      "rmsle": 0.1391028357128776,
+      "mae_usd": 17194.912764875866,
+      "r2": 0.8834364237427712,
+      "cv_rmsle": 0.13138316568390807,
+      "best_params": {
+        "colsample_bytree": 0.7,
+        "learning_rate": 0.05,
+        "max_depth": 4,
+        "n_estimators": 300
+      }
+    }
+  }
+}
