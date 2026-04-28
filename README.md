@@ -1,5 +1,7 @@
 # Preço de Casas — Pipeline ML com Demo
 
+> **Demo público:** _link a ser adicionado após deploy no Streamlit Cloud (M6.3)_
+
 Pipeline completo de Machine Learning para estimar preços de imóveis no dataset
 **Ames Housing** (Kaggle "House Prices: Advanced Regression Techniques").
 Refatoração da série didática "Adicionando novos algoritmos" (Partes 1-3) em
