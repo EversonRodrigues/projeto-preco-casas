@@ -14,4 +14,9 @@ venv/
 Skill/
 
 # dados ficam versionados (são pequenos, parte do "produto")
-# models/*.pkl ficam versionados (são produto reproduzível)
+# models/best_model.pkl fica versionado (vencedor, ~1.2MB — produto reproduzível)
+# rf_model.pkl e xgb_model.pkl são artefatos locais para a página de Comparação
+# (rf_model.pkl tem ~50MB; pesado pra repo e pra memória do Streamlit Cloud);
+# regenerados com `python -m src.train`
+models/rf_model.pkl
+models/xgb_model.pkl

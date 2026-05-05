@@ -21,9 +21,34 @@ from src.preprocessing import (
 MODELS_DIR = _ROOT / "models"
 
 
+def _model_path(name: str) -> Path:
+    """Resolve qual arquivo usar para o modelo dado.
+
+    O `xgb_model.pkl` é redundante com `best_model.pkl` quando o vencedor é XGB;
+    em deploy não versionamos os artefatos individuais (rf_model.pkl tem ~50MB).
+    Esta função tenta o arquivo individual primeiro; cai pro best_model.pkl
+    apenas se este corresponder ao algoritmo pedido.
+    """
+    individual = MODELS_DIR / f"{name}_model.pkl"
+    if individual.exists():
+        return individual
+    metadata_path = MODELS_DIR / "metadata.json"
+    best_path = MODELS_DIR / "best_model.pkl"
+    if metadata_path.exists() and best_path.exists():
+        import json
+        winner = json.loads(metadata_path.read_text(encoding="utf-8")).get("algorithm")
+        if winner == name:
+            return best_path
+    return individual  # path inválido, deixa o caller tratar
+
+
+def _model_available(name: str) -> bool:
+    return _model_path(name).exists()
+
+
 @st.cache_resource(show_spinner=False)
-def _load_individual(name: str):
-    return joblib.load(MODELS_DIR / f"{name}_model.pkl")
+def _load(name: str):
+    return joblib.load(_model_path(name))
 
 
 @st.cache_data(show_spinner=False)
@@ -36,21 +61,35 @@ def _category_options() -> dict[str, list[str]]:
 
 
 def _predict_with(model_name: str, payload: dict) -> float:
-    pipeline = _load_individual(model_name)
+    pipeline = _load(model_name)
     row = pd.DataFrame([payload], columns=list(payload.keys()))
     pred_log = pipeline.predict(row)[0]
     return float(np.expm1(pred_log))
 
 
 st.title("Comparação RF × XGB")
+
+rf_ok = _model_available("rf")
+xgb_ok = _model_available("xgb")
+
+if not (rf_ok and xgb_ok):
+    missing = [n for n, ok in (("RandomForest", rf_ok), ("XGBoost", xgb_ok)) if not ok]
+    st.warning(
+        f"Comparação interativa indisponível neste ambiente — modelo(s) ausente(s): "
+        f"{', '.join(missing)}. Os artefatos individuais (`rf_model.pkl`, "
+        f"`xgb_model.pkl`) não são versionados por questão de tamanho. Para habilitar "
+        f"localmente, rode `python -m src.train` na raiz do projeto.\n\n"
+        f"A comparação **estática** com base no holdout (abaixo) continua disponível."
+    )
+
 st.markdown(
-    "Predição lado a lado. Ambos os modelos passaram pelo mesmo grid search e "
-    "foram avaliados no mesmo holdout 20%. O **XGBoost** venceu por CV RMSLE."
+    "Ambos os modelos passaram pelo mesmo grid search e foram avaliados no mesmo "
+    "holdout 20%. O **XGBoost** venceu por CV RMSLE."
 )
 
 metrics = load_metrics()
 
-st.subheader("Métricas no holdout")
+st.subheader("Métricas no holdout (estático, sempre disponível)")
 comp = pd.DataFrame(
     {
         "RandomForest": [
@@ -77,6 +116,9 @@ st.dataframe(
     ),
     use_container_width=True,
 )
+
+if not (rf_ok and xgb_ok):
+    st.stop()
 
 st.divider()
 
@@ -175,8 +217,8 @@ if st.button("Comparar predições", type="primary"):
 
     if abs(diff) / rf_price > 0.05:
         st.info(
-            f"Os modelos divergem em mais de 5% nesta predição — pode indicar uma "
-            f"combinação de features incomum no treino, onde a confiança é menor."
+            "Os modelos divergem em mais de 5% nesta predição — pode indicar uma "
+            "combinação de features incomum no treino, onde a confiança é menor."
         )
     else:
         st.success("Modelos concordam dentro de 5% — predição mais confiável.")

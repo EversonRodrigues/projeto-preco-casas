@@ -9,7 +9,12 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
-from app._shared import get_predictor, load_train, shap_for_payload
+from app._shared import (
+    ShapUnavailable,
+    get_predictor,
+    load_train,
+    shap_for_payload,
+)
 from src.preprocessing import (
     CATEGORICAL_COLS,
     NUMERIC_COLS,
@@ -202,6 +207,17 @@ if submit:
             with st.spinner("Calculando contribuições..."):
                 contribs, base = shap_for_payload(payload)
             top = contribs[:12]
+        except ShapUnavailable:
+            st.info(
+                "Análise SHAP indisponível neste ambiente (biblioteca não foi "
+                "carregada). A predição numérica acima continua válida."
+            )
+            top = None
+        except Exception as e:
+            st.warning(f"Não foi possível gerar a análise SHAP: {e}")
+            top = None
+
+        if top:
             labels = [name for name, _ in top][::-1]
             values = [v for _, v in top][::-1]
             colors = ["#2ca02c" if v > 0 else "#d62728" for v in values]
@@ -230,5 +246,3 @@ if submit:
                 f"Base (preço médio do treino em log): **{base:.3f}** ≈ "
                 f"US$ {base_usd:,.0f}."
             )
-        except Exception as e:
-            st.warning(f"Não foi possível gerar a análise SHAP: {e}")

@@ -50,13 +50,23 @@ def load_train() -> pd.DataFrame:
     return treino
 
 
+class ShapUnavailable(RuntimeError):
+    """Marca que SHAP não pôde ser importado/inicializado neste ambiente."""
+
+
 @st.cache_resource(show_spinner=False)
 def get_shap_explainer():
     """TreeExplainer cacheado. Roda no estimator interno do pipeline.
 
-    Custo do build: ~1-2s no XGBoost com 800 árvores. Vale cachear.
+    Custo do build: ~1-2s no XGBoost com 800 árvores. Vale cachear. Em
+    ambientes onde `shap`/`numba` não estão disponíveis, levanta
+    `ShapUnavailable` (cacheado pelo @st.cache_resource — não tenta
+    reimportar a cada chamada).
     """
-    import shap
+    try:
+        import shap
+    except Exception as e:
+        raise ShapUnavailable(f"shap não disponível: {e}") from e
 
     from src.predict import load_model
 
@@ -70,6 +80,8 @@ def shap_for_payload(payload: dict) -> tuple[list[tuple[str, float]], float]:
     Agrega SHAP values dos one-hots de volta para o feature categórico original
     (ex: soma `Neighborhood_NridgHt`, `Neighborhood_NoRidge`, ... em
     `Neighborhood`). Numéricas passam direto.
+
+    Levanta `ShapUnavailable` se o ambiente não suporta shap/numba.
     """
     from src.predict import load_model
     from src.preprocessing import CATEGORICAL_COLS, FEATURE_NAMES
