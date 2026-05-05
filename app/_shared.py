@@ -48,3 +48,54 @@ def load_train() -> pd.DataFrame:
 
     treino, _ = load_data()
     return treino
+
+
+@st.cache_resource(show_spinner=False)
+def get_shap_explainer():
+    """TreeExplainer cacheado. Roda no estimator interno do pipeline.
+
+    Custo do build: ~1-2s no XGBoost com 800 árvores. Vale cachear.
+    """
+    import shap
+
+    from src.predict import load_model
+
+    pipeline = load_model()
+    return shap.TreeExplainer(pipeline.named_steps["model"])
+
+
+def shap_for_payload(payload: dict) -> tuple[list[tuple[str, float]], float]:
+    """Retorna (contribuições por feature raw, base value).
+
+    Agrega SHAP values dos one-hots de volta para o feature categórico original
+    (ex: soma `Neighborhood_NridgHt`, `Neighborhood_NoRidge`, ... em
+    `Neighborhood`). Numéricas passam direto.
+    """
+    from src.predict import load_model
+    from src.preprocessing import CATEGORICAL_COLS, FEATURE_NAMES
+
+    pipeline = load_model()
+    preproc = pipeline.named_steps["preproc"]
+    explainer = get_shap_explainer()
+
+    row = pd.DataFrame([{c: payload[c] for c in FEATURE_NAMES}], columns=FEATURE_NAMES)
+    Xt = preproc.transform(row)
+    shap_values = explainer(Xt)
+
+    expanded_names = list(preproc.get_feature_names_out())
+    cat_set = set(CATEGORICAL_COLS)
+
+    aggregated: dict[str, float] = {c: 0.0 for c in FEATURE_NAMES}
+    for name, val in zip(expanded_names, shap_values.values[0]):
+        # Para cat: o nome expandido começa com "<cat>_"; precisamos mapear de volta
+        source = name
+        if name not in aggregated:
+            for cat in cat_set:
+                if name.startswith(cat + "_"):
+                    source = cat
+                    break
+        aggregated[source] = aggregated.get(source, 0.0) + float(val)
+
+    contribs = sorted(aggregated.items(), key=lambda kv: abs(kv[1]), reverse=True)
+    base_value = float(shap_values.base_values[0])
+    return contribs, base_value

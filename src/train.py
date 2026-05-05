@@ -191,6 +191,13 @@ def main() -> None:
     save_model(winner_model, metadata)
     print(f">> Vencedor: {winner_name}. Salvo em models/best_model.pkl")
 
+    # Salvar ambos modelos individualmente para a página de comparação
+    rf_pkl = ROOT / "models" / "rf_model.pkl"
+    xgb_pkl = ROOT / "models" / "xgb_model.pkl"
+    joblib.dump(best_rf, rf_pkl)
+    joblib.dump(best_xgb, xgb_pkl)
+    print(f">> models/rf_model.pkl e models/xgb_model.pkl salvos")
+
     metrics_doc = {
         "winner": winner_name,
         "metrics": winner_metrics,

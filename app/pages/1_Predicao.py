@@ -6,9 +6,10 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 import numpy as np
+import plotly.graph_objects as go
 import streamlit as st
 
-from app._shared import get_predictor, load_train
+from app._shared import get_predictor, load_train, shap_for_payload
 from src.preprocessing import (
     CATEGORICAL_COLS,
     NUMERIC_COLS,
@@ -190,3 +191,44 @@ if submit:
 
     st.session_state["last_payload"] = payload
     st.session_state["last_price"] = price
+
+    with st.expander("Por que esse preço? — análise SHAP", expanded=True):
+        st.caption(
+            "Contribuição de cada feature à predição (em log USD). "
+            "Categoricals são agregadas — ex: o efeito do bairro inclui todas as "
+            "dummies one-hot relacionadas. Soma das contribuições + base ≈ log(preço)."
+        )
+        try:
+            with st.spinner("Calculando contribuições..."):
+                contribs, base = shap_for_payload(payload)
+            top = contribs[:12]
+            labels = [name for name, _ in top][::-1]
+            values = [v for _, v in top][::-1]
+            colors = ["#2ca02c" if v > 0 else "#d62728" for v in values]
+
+            fig = go.Figure(
+                go.Bar(
+                    x=values,
+                    y=labels,
+                    orientation="h",
+                    marker_color=colors,
+                    text=[f"{v:+.3f}" for v in values],
+                    textposition="outside",
+                )
+            )
+            fig.update_layout(
+                xaxis_title="Contribuição (log USD)",
+                yaxis_title="Feature",
+                height=420,
+                margin={"l": 0, "r": 20, "t": 20, "b": 0},
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+            base_usd = float(np.expm1(base))
+            st.caption(
+                f"Verde = empurra o preço pra cima · Vermelho = pra baixo. "
+                f"Base (preço médio do treino em log): **{base:.3f}** ≈ "
+                f"US$ {base_usd:,.0f}."
+            )
+        except Exception as e:
+            st.warning(f"Não foi possível gerar a análise SHAP: {e}")
