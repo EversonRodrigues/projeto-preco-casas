@@ -42,7 +42,10 @@ source .venv/Scripts/activate
 # Linux/Mac:
 # source .venv/bin/activate
 
-pip install -r requirements.txt
+# Use requirements-dev.txt para o set completo (API + testes + notebooks)
+pip install -r requirements-dev.txt
+
+# (requirements.txt sozinho instala só o necessário para o app Streamlit em deploy)
 
 # Treina e salva models/best_model.pkl + metadata.json (~3-10 min)
 python -m src.train
