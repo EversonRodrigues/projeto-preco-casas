@@ -14,24 +14,25 @@ import xgboost as xgb
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV, KFold
+from sklearn.pipeline import Pipeline
 
 from src.data import load_data, split_holdout
-from src.preprocessing import prepare_features
+from src.preprocessing import build_preprocessor, prepare_features
 
 ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = ROOT / "models"
 
 _RF_GRID = {
-    "n_estimators": [200, 500],
-    "max_depth": [10, 20, None],
-    "max_features": ["sqrt", 0.5],
+    "model__n_estimators": [200, 500],
+    "model__max_depth": [10, 20, None],
+    "model__max_features": ["sqrt", 0.5],
 }
 
 _XGB_GRID = {
-    "learning_rate": [0.05, 0.1],
-    "max_depth": [4, 6, 10],
-    "n_estimators": [300, 800],
-    "colsample_bytree": [0.7, 1.0],
+    "model__learning_rate": [0.05, 0.1],
+    "model__max_depth": [4, 6, 10],
+    "model__n_estimators": [300, 800],
+    "model__colsample_bytree": [0.7, 1.0],
 }
 
 
@@ -48,6 +49,15 @@ def _make_estimator(model_type: Literal["rf", "xgb"]):
     raise ValueError(f"model_type inválido: {model_type}")
 
 
+def _make_pipeline(model_type: Literal["rf", "xgb"]) -> Pipeline:
+    return Pipeline(
+        steps=[
+            ("preproc", build_preprocessor()),
+            ("model", _make_estimator(model_type)),
+        ]
+    )
+
+
 def run_grid_search(
     model_type: Literal["rf", "xgb"],
     X: pd.DataFrame,
@@ -56,7 +66,7 @@ def run_grid_search(
     grid = _RF_GRID if model_type == "rf" else _XGB_GRID
     cv = KFold(n_splits=5, shuffle=True, random_state=42)
     gs = GridSearchCV(
-        _make_estimator(model_type),
+        _make_pipeline(model_type),
         param_grid=grid,
         cv=cv,
         scoring="neg_root_mean_squared_error",
@@ -151,13 +161,31 @@ def main() -> None:
     else:
         winner_name, winner_model, winner_metrics = "xgb", best_xgb, metrics_xgb
 
+    def _strip_prefix(d: dict) -> dict:
+        return {k.replace("model__", ""): v for k, v in d.items()}
+
+    n_features_in = winner_model.named_steps["preproc"].n_features_in_
+    n_features_out = winner_model.named_steps["preproc"].transform(X_dev.head(1)).shape[1]
+
     metadata = {
         "algorithm": winner_name,
-        "hyperparams": winner_model.get_params(),
+        "hyperparams": _strip_prefix(
+            winner_model.named_steps["model"].get_params()
+        ),
         "metrics": winner_metrics,
+        "n_features_pre": int(n_features_in),
+        "n_features_post_onehot": int(n_features_out),
         "comparison": {
-            "rf": {**metrics_rf, "cv_rmsle": rf_cv, "best_params": summary_rf["best_params"]},
-            "xgb": {**metrics_xgb, "cv_rmsle": xgb_cv, "best_params": summary_xgb["best_params"]},
+            "rf": {
+                **metrics_rf,
+                "cv_rmsle": rf_cv,
+                "best_params": _strip_prefix(summary_rf["best_params"]),
+            },
+            "xgb": {
+                **metrics_xgb,
+                "cv_rmsle": xgb_cv,
+                "best_params": _strip_prefix(summary_xgb["best_params"]),
+            },
         },
     }
     save_model(winner_model, metadata)

@@ -115,6 +115,36 @@ mutação externa contamine o cache.
 
 ---
 
+## D-08. Reintrodução das 35 features categoricals (revoga D-02)
+
+**Contexto.** D-02 aceitou trabalhar só com 48 numéricas como dívida do MVP
+(R-07 do PRD), mas inspeção do CSV mostrou que as 35 colunas `object` estavam
+**presentes nos dados**, apenas ignoradas pelo `select_dtypes(include=["int64",
+"float64"])` no `prepare_features`. Não era necessário refazer o
+pré-processamento das Partes 1/2 — bastava encodar.
+
+**Decisão.** Adicionar `OneHotEncoder(handle_unknown="ignore")` via
+`ColumnTransformer` num sklearn `Pipeline` que vive em
+`src/preprocessing.build_preprocessor()`. O pipeline é fitado junto com o modelo
+e salvo como uma única `.pkl`. `FEATURE_NAMES` agora é a união de
+`NUMERIC_COLS` (48) + `CATEGORICAL_COLS` (35) = **83 raw**, expandidas para
+**277 colunas** após OneHot.
+
+**Consequências.**
+- Métricas: CV RMSLE 0.131 → **0.125** (-5%); MAE 17.195 → **16.496** (-4%);
+  R² 0.883 → **0.893**. Holdout RMSLE quase igual (0.139 → 0.138) — variância
+  esperada num holdout pequeno.
+- `HouseFeatures` (Pydantic) agora tem 83 campos: 48 `float` + 35 `str`.
+- Streamlit ganha `selectbox` para `Neighborhood`, `BldgType`, `HouseStyle`,
+  `Foundation`, `ExterQual`, `BsmtQual`, `KitchenQual`, `GarageType`, `Heating`.
+- Página Insights restaura "preço médio por bairro" no lugar do gráfico de
+  qualidade (que era um stand-in para D-02).
+- D-02 e D-03 ficam parcialmente obsoletas — D-03 só pelo número (48 → 83); a
+  premissa P-01 do PRD continua honrada (não recriei pré-processamento das
+  Partes 1/2, só usei o que já estava na CSV).
+
+---
+
 ## D-07. Critério de seleção do vencedor: CV, não holdout
 
 **Contexto.** `main()` em `src/train.py` precisa escolher entre RF e XGB para

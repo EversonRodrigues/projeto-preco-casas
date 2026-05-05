@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, create_model
 
-from src.preprocessing import FEATURE_NAMES
+from src.preprocessing import CATEGORICAL_COLS, FEATURE_NAMES
 
 
 def _safe_id(name: str) -> str:
@@ -14,13 +14,15 @@ def _safe_id(name: str) -> str:
     return safe
 
 
+_CAT_SET = set(CATEGORICAL_COLS)
 _fields: dict[str, Any] = {}
 for _name in FEATURE_NAMES:
     _safe = _safe_id(_name)
+    _type = str if _name in _CAT_SET else float
     if _safe == _name:
-        _fields[_safe] = (float, ...)
+        _fields[_safe] = (_type, ...)
     else:
-        _fields[_safe] = (float, Field(..., alias=_name))
+        _fields[_safe] = (_type, Field(..., alias=_name))
 
 HouseFeatures = create_model(
     "HouseFeatures",

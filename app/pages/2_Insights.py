@@ -14,7 +14,7 @@ import streamlit as st
 from app._shared import load_metrics, load_train
 from src.data import load_data, split_holdout
 from src.predict import load_model
-from src.preprocessing import FEATURE_NAMES, prepare_features
+from src.preprocessing import prepare_features
 
 st.title("Insights")
 
@@ -25,7 +25,10 @@ st.markdown(
 
 metrics = load_metrics()
 treino = load_train()
-model = load_model()
+pipeline = load_model()
+estimator = pipeline.named_steps["model"]
+preproc = pipeline.named_steps["preproc"]
+expanded_names = list(preproc.get_feature_names_out())
 
 c1, c2, c3 = st.columns(3)
 c1.metric("RMSLE", f"{metrics['metrics']['rmsle']:.4f}", help="Critério Kaggle")
@@ -35,7 +38,7 @@ c3.metric("R²", f"{metrics['metrics']['r2']:.3f}")
 st.divider()
 
 st.subheader("1. Importância das features (top 15)")
-importances = pd.Series(model.feature_importances_, index=FEATURE_NAMES)
+importances = pd.Series(estimator.feature_importances_, index=expanded_names)
 top15 = importances.sort_values(ascending=True).tail(15)
 fig1 = px.bar(
     x=top15.values,
@@ -56,17 +59,19 @@ fig2 = px.histogram(
 fig2.update_layout(height=350, margin={"l": 0, "r": 0, "t": 20, "b": 0})
 st.plotly_chart(fig2, use_container_width=True)
 
-st.subheader("3. Preço médio por OverallQual")
-st.caption(
-    "Substituto para 'preço por bairro' — `Neighborhood` foi descartado pelo "
-    "pré-processamento herdado das Partes 1/2 (apenas colunas numéricas restaram)."
+st.subheader("3. Preço médio por bairro (top 10)")
+neigh_summary = (
+    treino.groupby("Neighborhood")["SalePrice"]
+    .agg(["mean", "count"])
+    .sort_values("mean", ascending=False)
+    .head(10)
+    .reset_index()
 )
-qual_summary = treino.groupby("OverallQual")["SalePrice"].agg(["mean", "median", "count"]).reset_index()
 fig3 = px.bar(
-    qual_summary,
-    x="OverallQual",
+    neigh_summary,
+    x="Neighborhood",
     y="mean",
-    labels={"mean": "Preço médio (USD)", "OverallQual": "Qualidade geral"},
+    labels={"mean": "Preço médio (USD)", "Neighborhood": "Bairro"},
     text="count",
 )
 fig3.update_traces(texttemplate="n=%{text}", textposition="outside")
@@ -76,7 +81,7 @@ st.plotly_chart(fig3, use_container_width=True)
 st.subheader("4. Predito vs. Real (holdout)")
 treino_dev, treino_holdout = split_holdout(treino)
 X_h, y_h_log = prepare_features(treino_holdout)
-y_pred = np.expm1(model.predict(X_h))
+y_pred = np.expm1(pipeline.predict(X_h))
 y_real = np.expm1(y_h_log).values
 limit = max(y_real.max(), y_pred.max()) * 1.05
 fig4 = go.Figure()

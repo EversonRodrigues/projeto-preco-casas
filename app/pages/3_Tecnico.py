@@ -26,7 +26,10 @@ data/train_3_1.csv  ─┐
               src/data.split_holdout (20% holdout)
                      │
             src/preprocessing.prepare_features
-              (48 features numéricas, np.log1p no target)
+              (48 numéricas + 35 categoricals = 83 raw, np.log1p no target)
+                     │
+            src/preprocessing.build_preprocessor
+              (ColumnTransformer + OneHotEncoder → 277 features)
                      │
             ┌────────┴────────┐
             │                 │
@@ -51,6 +54,12 @@ st.write(
     f"**Algoritmo:** {metadata['algorithm']}  ·  "
     f"**Treinado em:** {metadata['train_date']}"
 )
+n_pre = metadata.get("n_features_pre")
+n_post = metadata.get("n_features_post_onehot")
+if n_pre and n_post:
+    st.caption(
+        f"Pipeline expande {n_pre} features raw → {n_post} pós OneHotEncoder."
+    )
 
 st.subheader("Hiperparâmetros vencedores")
 hp_winner = (
